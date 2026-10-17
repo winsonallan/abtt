@@ -5,10 +5,10 @@ namespace App;
 enum WorkOrderStatus: string
 {
     //
-    case Running = 'RUNNING';
+    case Cancelled = 'CANCELLED';
     case Finished = 'FINISHED';
     case Open = 'OPEN';
-    case Cancelled = 'CANCELLED';
+    case Running = 'RUNNING';
 
 
     public static function values(): array
