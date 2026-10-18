@@ -36,7 +36,7 @@ class WorkOrder extends Model
         return $this->belongsTo(Employee::class, 'employee_no', 'employee_no');
     }
 
-    public function productionResult(): HasMany
+    public function results(): HasMany
     {
         return $this->hasMany(ProductionResult::class, 'wo_number', 'wo_number');
     }
