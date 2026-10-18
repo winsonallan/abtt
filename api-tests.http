@@ -1,0 +1,9 @@
+### GET dashboard data
+GET http://localhost:8000/api/dashboard
+
+### GET specific machine data
+GET http://localhost:8000/api/dashboard/machine/DSP01
+
+### GET production orders
+
+### POST production results
