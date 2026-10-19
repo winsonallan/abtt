@@ -1,58 +1,92 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Production Dashboard
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+REST API Laravel 13 dan dashboard untuk data manufaktur (mesin, produk, work order, hasil produksi, downtime).
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 1. Menjalankan aplikasi dengan Docker
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**Kebutuhan:** Docker dengan Docker Compose (Docker Desktop untuk Windows/macOS). PHP, Node.js, dan database tidak perlu diinstal.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Jalankan di folder proyek:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+docker compose up -d --build
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Perintah tersebut membangun image, menjalankan MariaDB (dataset di-import otomatis), lalu menjalankan aplikasi.
+Build pertama membutuhkan koneksi internet dan memakan waktu lebih lama dari build-build selanjutnya.
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 2. Konfigurasi environment (`.env`)
 
-## Code of Conduct
+Docker memakai file [`.env.docker`](.env.docker) yang sudah disediakan, jadi tidak perlu membuat atau mengubah `.env`.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+| Variabel | Nilai | Keterangan |
+|---|---|---|
+| `APP_ENV` | `production` | Mode aplikasi |
+| `APP_DEBUG` | `false` | Detail error tidak ditampilkan di browser |
+| `APP_KEY` | sudah di-generate | Kunci enkripsi Laravel (kunci uji coba) |
+| `APP_URL` | `http://localhost:8080` | Alamat aplikasi |
+| `APP_TIMEZONE` | `Asia/Jakarta` | Zona waktu |
+| `LOG_CHANNEL` | `stderr` | Log dibaca dengan `docker compose logs app` |
+| `DB_CONNECTION` | `mysql` | Driver Laravel (berlaku untuk MariaDB dan MySQL) |
+| `DB_HOST` | `db` | Nama service database di jaringan Docker |
+| `DB_PORT` | `3306` | Port database di jaringan Docker |
+| `DB_DATABASE` | `manufacturing_test` | Nama database |
+| `DB_USERNAME` / `DB_PASSWORD` | `app` / `secret` | Akun database untuk aplikasi |
+| `SESSION_DRIVER` / `CACHE_STORE` / `QUEUE_CONNECTION` | `file` / `file` / `sync` | Tidak memakai tabel database, agar skema yang disediakan tidak berubah |
+| `MYSQL_ROOT_PASSWORD` | `root` | Password root database |
+| `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD` | sama dengan `DB_*` | Dipakai container database untuk membuat akun |
 
-## Security Vulnerabilities
+Catatan: `MYSQL_*` harus sama dengan `DB_*`. Jangan menjalankan `php artisan migrate`, karena skema database yang disediakan tidak boleh diubah.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## 3. Import database
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+**Otomatis.** File [`docker/db/dataset.sql`](docker/db/dataset.sql) di-mount ke `/docker-entrypoint-initdb.d/` pada container database.
+Image MariaDB menjalankan file tersebut **satu kali, saat volume data masih kosong** (yaitu `docker compose up` pertama).
+Tidak ada langkah manual.
+
+Cek hasilnya:
+
+```bash
+docker compose exec db mysql -uroot -proot -e "USE manufacturing_test; SHOW TABLES;"
+```
+
+**Import ulang dari awal:**
+
+```bash
+docker compose down -v
+docker compose up -d --build
+```
+
+**Import manual** (ke container yang sedang berjalan, atau ke server MySQL/MariaDB lain):
+
+```bash
+docker compose exec -T db mysql -uroot -proot < docker/db/dataset.sql
+mysql -u root -p < docker/db/dataset.sql
+```
+
+Koneksi dari klien database (DBeaver, HeidiSQL, dll.): `127.0.0.1:3307`, database `manufacturing_test`, user `app`, password `secret`.
+
+---
+
+## 4. URL aplikasi dan endpoint API
+
+| Apa | URL |
+|---|---|
+| Dashboard | http://localhost:8080 |
+| Base URL API | http://localhost:8080/api |
+
+| Method | Endpoint | Deskripsi |
+|---|---|---|
+| GET | `/api/dashboard` | Ringkasan, tren 7 hari, breakdown status, 10 mesin teratas |
+| GET | `/api/dashboard/machine/{id}` | Performa satu mesin (`{id}` = kode mesin, contoh `DSP02`) |
+| GET | `/api/production-orders` | Daftar work order. Parameter: `search`, `product`, `machine`, `status`, `date`, `sort_by`, `sort_dir`, `per_page`, `page` |
+| POST | `/api/production-results` | Menyimpan hasil produksi |
+
+Body `POST /api/production-results` (JSON): `wo_number`, `production_date` (`Y-m-d`, tidak boleh lebih dari hari ini),
+`qty_good` >= 0, `qty_reject` >= 0, dan opsional `runtime_minutes`. Work order harus berstatus `RUNNING`, jika tidak API menjawab `422`.
