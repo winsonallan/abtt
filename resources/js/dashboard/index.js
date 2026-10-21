@@ -65,7 +65,6 @@ function init() {
 
         try {
             const data = await fetchDashboard(current.signal);
-            console.log(data);
             render(data);
             hideError();
         } catch (error) {

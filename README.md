@@ -1,3 +1,5 @@
+Query untuk bagian A dapat dilihat di **Query Bagian A.sql** di project root
+
 # Production Dashboard
 
 REST API Laravel 13 dan dashboard untuk data manufaktur (mesin, produk, work order, hasil produksi, downtime).

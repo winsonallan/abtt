@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:8000/api
 
-# WO2026001501 is RUNNING (valid). WO2026000001 is FINISHED (invalid).
+# WO2026000009 is RUNNING (valid). WO2026000001 is FINISHED (invalid).
 
 ### Valid
 POST {{baseUrl}}/production-results
@@ -8,7 +8,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "wo_number": "WO2026001501",
+  "wo_number": "WO2026000009",
   "production_date": "2026-01-15",
   "qty_good": 450,
   "qty_reject": 12

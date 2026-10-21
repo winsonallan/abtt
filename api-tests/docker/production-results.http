@@ -1,0 +1,80 @@
+@baseUrl = http://localhost:8080/api
+
+# WO2026000009 is RUNNING (valid). WO2026000001 is FINISHED (invalid).
+
+### Valid
+POST {{baseUrl}}/production-results
+Content-Type: application/json
+Accept: application/json
+
+{
+  "wo_number": "WO2026000009",
+  "production_date": "2026-01-15",
+  "qty_good": 450,
+  "qty_reject": 12
+}
+
+?? status == 201
+
+### Invalid: negative quantities
+POST {{baseUrl}}/production-results
+Content-Type: application/json
+Accept: application/json
+
+{
+  "wo_number": "WO2026000137",
+  "production_date": "2026-01-15",
+  "qty_good": -1,
+  "qty_reject": -5
+}
+
+?? status == 422
+
+### Invalid: production_date in the future
+POST {{baseUrl}}/production-results
+Content-Type: application/json
+Accept: application/json
+
+{
+  "wo_number": "WO2026000137",
+  "production_date": "2099-01-01",
+  "qty_good": 100,
+  "qty_reject": 1
+}
+
+?? status == 422
+
+### Invalid: work order is not RUNNING (FINISHED)
+POST {{baseUrl}}/production-results
+Content-Type: application/json
+Accept: application/json
+
+{
+  "wo_number": "WO2026000001",
+  "production_date": "2026-01-15",
+  "qty_good": 100,
+  "qty_reject": 1
+}
+
+?? status == 422
+
+### Invalid: work order does not exist
+POST {{baseUrl}}/production-results
+Content-Type: application/json
+Accept: application/json
+
+{
+  "wo_number": "WO0000000000",
+  "production_date": "2026-01-15",
+  "qty_good": 100,
+  "qty_reject": 1
+}
+
+?? status == 422
+
+### Check the data exists: good_qty / reject_qty of WO2026000989 include the valid POST
+GET {{baseUrl}}/production-orders
+    ?search=WO2026001500
+Accept: application/json
+
+?? status == 200
