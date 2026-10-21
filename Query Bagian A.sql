@@ -68,7 +68,7 @@ machine_achievements AS (
     machine_name,
     good,
     reject,
-    FLOOR(good / NULLIF(good, 0) * 100) AS achievement
+    ROUND(good / NULLIF(target, 0) * 100) AS achievement
     FROM machines
 )
 SELECT
@@ -116,7 +116,7 @@ SELECT
   DATE_FORMAT(prod_date, '%Y-%m-%d') AS `Date`,
   good AS `Total Good`,
   reject AS `Total Reject`,
-  ROUND(good / NULLIF(target, 0) * 100) AS `Achievement`
+  COALESCE(ROUND(good / NULLIF(target, 0) * 100), 0) AS `Achievement`
 FROM
   daily
 ORDER BY
